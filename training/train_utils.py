@@ -41,100 +41,13 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# def collate_fn(batch):
-#     """ Instructs how the DataLoader should process the data into a batch"""
-    
-#     text = [item['text'] for item in batch]
-#     tabular = torch.stack([torch.tensor(item['tabular']) for item in batch])
-#     labels = torch.stack([torch.tensor(item['label']) for item in batch])
 
-#     return {'text': text, 'tabular': tabular, 'label': labels}
 def collate_fn(batch):
     """ Instructs how the DataLoader should process the data into a batch"""
     text = [item['sentence'] for item in batch]
     labels = torch.tensor([item['label'] for item in batch])
     return {'text': text, 'label': labels}
 
-
-
-# def data_load(data_path):
-#     # "../data/train-sample.csv"
-#     df = pd.read_csv(data_path)
-
-#     # dict mapping strings to integers
-#     string_to_int = {
-#         'open': 0,
-#         'not a real question': 1,
-#         'off topic': 1,
-#         'not constructive': 1,
-#         'too localized': 1
-#     }
-
-#     # add new features to dataframe
-#     df['OpenStatusInt'] = df['OpenStatus'].map(string_to_int)  # convert class strings to integers
-#     df['BodyLength'] = df['BodyMarkdown'].apply(lambda x: len(x.split(" ")))  # number of words in body text
-#     df['TitleLength'] = df['Title'].apply(lambda x: len(x.split(" ")))  # number of words in title text
-#     df['TitleConcatWithBody'] = df.apply(lambda x: x.Title +  " " + x.BodyMarkdown, axis=1)  # combine title and body text
-#     df['NumberOfTags'] = df.apply(
-#         lambda x: len([x[col] for col in ['Tag1', 'Tag2', 'Tag3', 'Tag4', 'Tag5'] if not pd.isna(x[col])]), 
-#         axis=1,
-#     )  # number of tags
-#     df['PostCreationDate'] = pd.to_datetime(df['PostCreationDate'])  # convert string to Timedelta object
-#     df['OwnerCreationDate'] = pd.to_datetime(df['OwnerCreationDate'], format='mixed')  # convert string to Timedelta object
-#     df['DayDifference'] = (df['PostCreationDate'] - df['OwnerCreationDate']).dt.days  # days between account creation and post creation 
-
-#     # list of col names with tabular data 
-#     tabular_feature_list = [
-#         'ReputationAtPostCreation',  
-#         'BodyLength', 
-#         'TitleLength', 
-#         'NumberOfTags',
-#         'DayDifference',
-#     ]
-
-#     # place the desired data from the dataframe into a dictionary
-#     data_dict = {
-#         'text': df.TitleConcatWithBody.tolist(),
-#         'tabular': df[tabular_feature_list].values,
-#         'label': df.OpenStatusInt.tolist(),
-#     }
-
-#     # load data into hugging face dataset object
-#     dataset_stackoverflow = Dataset.from_dict(data_dict)
-
-#     # define the indices at which to split the dataset into train/validation/test
-#     n_samples = len(dataset_stackoverflow)
-#     split_idx1 = int(n_samples * 0.8)
-#     split_idx2 = int(n_samples * 0.9)
-
-#     # shuffle the dataset
-#     shuffled_dataset = dataset_stackoverflow.shuffle(seed=42)
-
-#     # split dataset training/validation/test
-#     train_dataset = shuffled_dataset.select(range(split_idx1))
-#     val_dataset = shuffled_dataset.select(range(split_idx1, split_idx2))
-#     test_dataset = shuffled_dataset.select(range(split_idx2, n_samples))
-
-#     # calculate mean and std of each tabular feature
-#     mean_train = torch.mean(torch.tensor(train_dataset['tabular'], dtype=torch.float32), dim=0)
-#     std_train = torch.std(torch.tensor(train_dataset['tabular'], dtype=torch.float32), dim=0)
-
-#     # define a function to apply standard scaling to the tabular data
-#     def standard_scale(example):
-#         example['tabular'] = (torch.tensor(example['tabular']) - mean_train) / std_train
-#         return example
-
-#     # apply the standard scaling function to the tabular features
-#     train_dataset = train_dataset.map(standard_scale)
-#     val_dataset = val_dataset.map(standard_scale)
-#     test_dataset = test_dataset.map(standard_scale)
-
-#     # load the datasets into a dataloader
-#     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, collate_fn=collate_fn)
-#     val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=True, collate_fn=collate_fn)
-#     test_dataloader = DataLoader(test_dataset, batch_size=8, shuffle=True, collate_fn=collate_fn)
-
-#     return train_dataloader, val_dataloader, test_dataloader
 
 def data_load():
     # ds = load_dataset("stanfordnlp/sst2")
