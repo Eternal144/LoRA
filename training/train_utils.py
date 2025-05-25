@@ -221,6 +221,11 @@ class BertTrainer:
             loss={round(avg_loss_epoch, 4)}"
         )    
         
+        print(f"epoch {epoch} with best epoch as {self.epoch_best_model}")
+        print(f"avg loss: {avg_loss_epoch}, best eval loss: {self.eval_loss}")
+        print(f"save: {self.save}")
+        print(f"train: {train}")
+        print(avg_loss_epoch < self.eval_loss)
         # save the model if the evaluation loss is lower than the previous best epoch 
         if self.save and not train and avg_loss_epoch < self.eval_loss:
             
@@ -229,8 +234,9 @@ class BertTrainer:
             dir_path.mkdir(parents=True, exist_ok=True)
             file_path = dir_path / f"{self.output_filename}_epoch_{epoch}.pt"
             
+
             # delete previous best model from hard drive
-            if epoch > 0:
+            if self.epoch_best_model != epoch:
                 file_path_best_model = dir_path / f"{self.output_filename}_epoch_{self.epoch_best_model}.pt"
                 # !rm -f $file_path_best_model
                 file_path_best_model.unlink(missing_ok=True)
@@ -244,3 +250,4 @@ class BertTrainer:
             # update the new best loss and epoch
             self.eval_loss = avg_loss_epoch
             self.epoch_best_model = epoch
+            print(f"updated best epoch {self.epoch_best_model} with loss {self.eval_loss}")

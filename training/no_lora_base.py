@@ -40,11 +40,6 @@ from train_utils import (
     BertTrainer,
 )
 
-VE_suffix1 = "layer_every_other"
-VE_suffix2 = "layer_middle_4"
-VE_suffix3 = "rank_32"
-VE_suffix4 = "test"
-suffix = VE_suffix4
 
 def main():
     torch.manual_seed(42)
@@ -62,10 +57,6 @@ def main():
         num_labels=2,
     )
 
-    # LoRA BERT-base rank = 8
-    add_lora_layers(bert_base, r=32, lora_alpha=16, ignore_layers=[])  # inject the LoRA layers into the model
-    freeze_model(bert_base)  # freeze the non-LoRA parameters
-
     n_params = 0
     n_trainable_params = 0
 
@@ -79,60 +70,40 @@ def main():
     print(f"Trainable parameters: {n_trainable_params}")
     print(f"Percentage trainable: {round(n_trainable_params / n_params * 100, 2)}%")
 
-    # bert base lora all r = 8
-    trainer_bert_base_lora = BertTrainer(
+    #bert base
+    trainer_bert_base = BertTrainer(
         bert_base,
         tokenizer_base,
-        lr=5e-04,
+        lr=5e-06,
         epochs=5,
         train_dataloader=train_dataloader,
         eval_dataloader=val_dataloader,
-        output_dir=f'/net/scratch/lss/VE/bert_base_fine_tuned_lora_r8_{suffix}',
-        output_filename=f'bert_base_lora_r8_{suffix}',
+        output_dir='/net/scratch/lss/VE/bert_base_fine_tuned',
+        output_filename='bert_base',
         save=True,
     )
 
-    trainer_bert_base_lora.train(evaluate=True)
+    trainer_bert_base.train(evaluate=True)
 
-    model_dir = f"/net/scratch/lss/VE/bert_base_fine_tuned_lora_r8_{suffix}"
-
-    # Get all .pt files in the folder
+    model_dir = f"/net/scratch/lss/VE/bert_base_fine_tuned"
     model_files = glob.glob(os.path.join(model_dir, "*.pt"))
-
-    # Load the model
     state_dict = torch.load(model_files[0])
-    # state_dict = torch.load("/net/scratch/lss/VE/bert_base_fine_tuned_lora_r8/bert_base_lora_r8_epoch_0.pt")
     bert_base.load_state_dict(state_dict["model_state_dict"])
 
-    # merge weights
-    merge_lora_layers(bert_base) 
-    unfreeze_model(bert_base)
-
-    # create directory and filepaths
-    dir_path = Path(f"/net/scratch/lss/VE/bert_base_fine_tuned_lora_r8_{suffix}/merged")
-    dir_path.mkdir(parents=True, exist_ok=True)
-    file_path = dir_path / f"bert_base_lora_r8_epoch_best_merged_{suffix}.pt"
-
-    # save model
-    torch.save({
-        "model_state_dict": bert_base.state_dict(),
-    }, file_path)
-
-    trainer_bert_base_lora_r8 = BertTrainer(
+    # trainer
+    trainer_bert_base = BertTrainer(
         bert_base,
         tokenizer_base,
-        lr=5e-04,
+        lr=5e-06,
         epochs=5,
         train_dataloader=train_dataloader,
         eval_dataloader=test_dataloader,
-        output_dir=f'/net/scratch/lss/VE/bert_base_fine_tuned_lora_r8_{suffix}',
-        output_filename=f'bert_base_lora_r8_{suffix}',
+        output_dir='/net/scratch/lss/VE/bert_base_fine_tuned',
+        output_filename='bert_base',
         save=False,
     )
 
-    trainer_bert_base_lora_r8.evaluate()
-    
+    trainer_bert_base.evaluate()
 
 if __name__ == "__main__":
     main()
-
